@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>My School Hub — Schedule & Homework</title>
+  <link rel="stylesheet" href="style.css" />
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎒</text></svg>" />
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <h1>🎒 My School Hub</h1>
+      <p class="tagline">Your whole week + every homework, in one place</p>
+      <span id="sync-status" class="sync-pill offline" title="Sync status">📴 Local only</span>
+    </div>
+  </header>
+
+  <nav class="tabs">
+    <button class="tab active" data-tab="schedule">📅 Weekly Schedule</button>
+    <button class="tab" data-tab="homework">📚 Homework</button>
+    <button class="tab" data-tab="ai">🤖 AI Helper</button>
+    <button class="tab" data-tab="settings">⚙️ Settings</button>
+  </nav>
+
+  <main>
+    <!-- ============ SCHEDULE ============ -->
+    <section id="tab-schedule" class="tab-panel active">
+      <div class="panel-head">
+        <h2>My Week</h2>
+        <p>Click any cell to type your class. Changes save automatically.</p>
+      </div>
+
+      <div class="schedule-controls">
+        <label class="inline-label">Period name:
+          <input type="text" id="new-period-name" placeholder="e.g. Period 1 / 08:30" />
+        </label>
+        <button id="add-period" class="btn small">+ Add period</button>
+        <span class="spacer"></span>
+        <button id="clear-schedule" class="btn small danger">Clear schedule</button>
+      </div>
+
+      <div class="table-wrap">
+        <table id="schedule-table">
+          <thead>
+            <tr id="schedule-head-row"></tr>
+          </thead>
+          <tbody id="schedule-body"></tbody>
+        </table>
+      </div>
+    </section>
+
+    <!-- ============ HOMEWORK ============ -->
+    <section id="tab-homework" class="tab-panel">
+      <div class="panel-head">
+        <h2>Homework Tracker</h2>
+        <p>Add every assignment, mark them done, and ask AI for help on any of them.</p>
+      </div>
+
+      <form id="hw-form" class="card hw-form">
+        <h3>Add homework</h3>
+        <div class="form-grid">
+          <label>Subject *
+            <input type="text" id="hw-subject" list="subject-list" placeholder="e.g. Math" required />
+          </label>
+          <label>Title *
+            <input type="text" id="hw-title" placeholder="e.g. Page 42, exercises 1–10" required />
+          </label>
+          <label>Due date *
+            <input type="date" id="hw-due" required />
+          </label>
+          <label>Priority
+            <select id="hw-priority">
+              <option value="low">🟢 Low</option>
+              <option value="medium" selected>🟡 Medium</option>
+              <option value="high">🔴 High</option>
+            </select>
+          </label>
+        </div>
+        <label>Description / details
+          <textarea id="hw-desc" rows="3" placeholder="What exactly do you have to do? Paste the exercise text here — it helps the AI a lot."></textarea>
+        </label>
+        <button type="submit" class="btn primary">➕ Add homework</button>
+      </form>
+
+      <datalist id="subject-list"></datalist>
+
+      <div class="hw-filters">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="todo">To do</button>
+        <button class="chip" data-filter="done">Done</button>
+        <button class="chip" data-filter="overdue">⚠️ Overdue</button>
+        <span class="spacer"></span>
+        <span id="hw-stats" class="muted"></span>
+      </div>
+
+      <div id="hw-list" class="hw-list"></div>
+    </section>
+
+    <!-- ============ AI HELPER ============ -->
+    <section id="tab-ai" class="tab-panel">
+      <div class="panel-head">
+        <h2>AI Homework Helper</h2>
+        <p>Pick a homework, choose your favourite AI, and it opens with a prompt ready to send.</p>
+      </div>
+
+      <div class="card">
+        <h3>Quick ask</h3>
+        <p class="muted">No homework selected — just ask the AI anything.</p>
+        <div class="ai-row">
+          <input type="text" id="quick-ask" placeholder="e.g. Explain how to factor x² − 5x + 6" />
+          <button id="quick-send" class="btn primary">Ask ChatGPT →</button>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Ask about a homework</h3>
+        <label>Select homework
+          <select id="ai-hw-select"></select>
+        </label>
+        <label>What kind of help?
+          <select id="ai-mode">
+            <option value="explain">Explain step by step so I understand</option>
+            <option value="hint">Give me hints without the full answer</option>
+            <option value="solve">Solve it and check my work</option>
+            <option value="summary">Summarize what I need to do</option>
+          </select>
+        </label>
+        <div class="ai-buttons">
+          <button class="btn ai-gpt" data-ai="chatgpt">Ask ChatGPT</button>
+          <button class="btn ai-claude" data-ai="claude">Ask Claude</button>
+          <button class="btn ai-gemini" data-ai="gemini">Ask Gemini</button>
+          <button class="btn ghost" id="copy-prompt">📋 Copy prompt</button>
+        </div>
+        <label>Preview of the prompt sent to the AI:</label>
+        <pre id="prompt-preview" class="prompt-preview"></pre>
+      </div>
+    </section>
+
+    <!-- ============ SETTINGS ============ -->
+    <section id="tab-settings" class="tab-panel">
+      <div class="panel-head">
+        <h2>Settings</h2>
+        <p>Your data lives in this browser. Back it up so you never lose it.</p>
+      </div>
+
+      <div class="card">
+        <h3>☁️ Cloud sync — all your devices, live</h3>
+        <p class="muted">
+          One-time setup (about 5 minutes). After that, every change on your phone appears on your PC
+          in about a second — and vice versa. Both devices must use the <b>same sync code</b>.
+        </p>
+        <div class="form-grid">
+          <label>Firebase API key
+            <input type="text" id="sync-api-key" placeholder="AIzaSy..." autocomplete="off" />
+          </label>
+          <label>Firebase Database URL
+            <input type="text" id="sync-db-url" placeholder="https://your-project-default-rtdb.firebaseio.com" autocomplete="off" />
+          </label>
+          <label>Firebase Project ID
+            <input type="text" id="sync-project-id" placeholder="your-project-id" autocomplete="off" />
+          </label>
+          <label>Sync code (a secret word you invent)
+            <input type="text" id="sync-code" placeholder="e.g. my-secret-42" autocomplete="off" />
+          </label>
+        </div>
+        <div class="ai-buttons">
+          <button id="sync-connect" class="btn primary">🔗 Connect sync</button>
+          <button id="sync-disconnect" class="btn danger" hidden>Disconnect</button>
+        </div>
+        <p id="sync-msg" class="muted"></p>
+        <details>
+          <summary>📖 One-time setup guide (click to open)</summary>
+          <ol class="setup-steps">
+            <li>Go to <b>console.firebase.google.com</b> and click <b>Add project</b> (any name, disable analytics).</li>
+            <li>In the left menu: <b>Build → Realtime Database → Create Database</b> → pick a location → <b>Start in test mode</b>.</li>
+            <li>Go to <b>Rules</b> tab and paste:
+              <pre>{
+  "rules": {
+    "school-hub": {
+      ".read": "auth != null",
+      ".write": "auth != null"
+    }
+  }
+}</pre>
+              then click <b>Publish</b>.</li>
+            <li>Go to <b>Build → Authentication → Get started</b>, enable the <b>Anonymous</b> provider.</li>
+            <li>Click the ⚙️ gear → <b>Project settings</b> → under "Your apps" click the <b>&lt;/&gt;</b> (Web) icon → register the app (no hosting needed).</li>
+            <li>Copy <b>apiKey</b>, <b>databaseURL</b> and <b>projectId</b> from the shown config into the fields above, invent a sync code, and click <b>Connect sync</b> — on every device.</li>
+          </ol>
+          <p class="muted">Keys are saved only in your browser's storage — they are never written into your website files or your GitHub repo.</p>
+        </details>
+      </div>
+
+      <div class="card">
+        <h3>Backup & restore</h3>
+        <div class="ai-buttons">
+          <button id="export-data" class="btn primary">⬇️ Export data (JSON)</button>
+          <button id="import-data" class="btn">⬆️ Import data</button>
+          <input type="file" id="import-file" accept=".json" hidden />
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Danger zone</h3>
+        <p class="muted">This deletes your schedule and all homework from this browser.</p>
+        <button id="reset-all" class="btn danger">🗑️ Delete everything</button>
+      </div>
+
+      <div class="card">
+        <h3>About</h3>
+        <p class="muted">
+          Made with plain HTML, CSS and JavaScript. Hosted on GitHub Pages.
+          Works offline; optional live cloud sync across devices via Firebase (set it up above).
+        </p>
+      </div>
+    </section>
+  </main>
+
+  <div id="toast" class="toast"></div>
+
+  <!-- Firebase (only used if you enable cloud sync in Settings) -->
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-database-compat.js"></script>
+
+  <script src="script.js"></script>
+</body>
+</html>
